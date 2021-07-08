@@ -9,8 +9,8 @@ class Network(object):
     def __init__(self):
         self.links = np.array(
             [{'is_saturated': True, 'bw': 10, 'local': 'gye'}, {'is_saturated': True, 'bw': 9, 'local': 'quito'}, {'is_saturated': False, 'bw': 2}])
-        self.stateSpace = [1, 2, 3, 4]  # 1 2 3
-        self.stateSpacePlus = [0, 1, 2, 3, 4]
+        self.stateSpace = [1, 2, 3]  # 1 2 3
+        self.stateSpacePlus = [0, 1, 2, 3]
         self.actionSpace = {'A': 0, 'B': 1, 'C': 2, 'D': 3}
         self.possibleActions = ['A', 'B', 'C']
         self.congestedLinks = 2
@@ -28,9 +28,9 @@ class Network(object):
         for link in network_state:
             if link['is_saturated']:
                 link['bw'] -= 2
+                link['is_saturated'] = link['bw'] >= 9
                 network_state[link_chosen]['bw'] += 2
                 network_state[link_chosen]['is_saturated'] = network_state[link_chosen]['bw'] >= 9
-                link['is_saturated'] = network_state[link_chosen]['bw'] >= 9
                 break
 
         count = 0
