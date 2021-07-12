@@ -2,17 +2,28 @@ import logging
 import numpy as np
 import matplotlib.pyplot as plt
 
-logger = logging.getLogger('tesis')
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logger = logging.getLogger("tesis")
+logger.setLevel(logging.INFO)
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
+ch.setFormatter(formatter)
+logger.addHandler(ch)
 
 
 class Network(object):
     def __init__(self):
         self.links = np.array(
-            [{'is_saturated': True, 'bw': 10, 'local': 'gye'}, {'is_saturated': True, 'bw': 9, 'local': 'quito'}, {'is_saturated': False, 'bw': 2}])
-        self.stateSpace = [1, 2, 3]  # 1 2 3
-        self.stateSpacePlus = [0, 1, 2, 3]
+            [
+                {'is_saturated': True, 'bw': 10, 'local': 'gye'},
+                {'is_saturated': True, 'bw': 9, 'local': 'uio'},
+                {'is_saturated': False, 'bw': 2, 'local': 'gye'},
+                {'is_saturated': False, 'bw': 2, 'local': 'uio'}
+            ])
+        self.stateSpace = [1, 2, 3, 4]  # 1 2 3
+        self.stateSpacePlus = [0, 1, 2, 3, 4]
         self.actionSpace = {'A': 0, 'B': 1, 'C': 2, 'D': 3}
-        self.possibleActions = ['A', 'B', 'C']
+        self.possibleActions = ['A', 'B', 'C', 'D']
         self.congestedLinks = 2
 
     def isTerminalState(self, state):  # State is links state in general
@@ -25,12 +36,20 @@ class Network(object):
         - Calculates state -> number of saturated links
         """
         logger.info("Setting state")
+        isLocal = False
+        reference = 2
+
         for link in network_state:
             if link['is_saturated']:
-                link['bw'] -= 2
+                if link['local'] == 'uio':
+                    reference = 3
+                link['bw'] -= reference
                 link['is_saturated'] = link['bw'] >= 9
-                network_state[link_chosen]['bw'] += 2
+                network_state[link_chosen]['bw'] += reference
                 network_state[link_chosen]['is_saturated'] = network_state[link_chosen]['bw'] >= 9
+
+                if link['local'] == network_state[link_chosen]['local']:
+                    isLocal = True
                 break
 
         count = 0
@@ -38,7 +57,17 @@ class Network(object):
             if link['is_saturated']:
                 count += 1
         self.congestedLinks = count  # state actual
-        return
+
+        if self.isTerminalState(self.congestedLinks):
+            if isLocal:
+                return 0
+            else:
+                return -5
+        else:
+            if isLocal:
+                return -1
+            else:
+                return -2
 
     def step(self, action):
         """
@@ -56,8 +85,7 @@ class Network(object):
         if self.links[link_chosen]['is_saturated']:
             return self.congestedLinks, -10, self.isTerminalState(self.congestedLinks), f"Link chosen {link_chosen} is currently saturated"
         else:
-            self.setState(self.links, link_chosen)
-            reward = -1 if not self.isTerminalState(self.congestedLinks) else 0
+            reward = self.setState(self.links, link_chosen)
             return self.congestedLinks, reward, self.isTerminalState(self.congestedLinks), None
 
     def reset(self):
@@ -65,14 +93,20 @@ class Network(object):
         - At the end of every episode (epoch?) we have to reset the environment for a new learning to occurr
         """
         logger.info("Resetting board")
-        self.links = np.array([{'is_saturated': True, 'bw': 10}, {'is_saturated': True, 'bw': 9}, {'is_saturated': False, 'bw': 2}])
+        self.links = np.array(
+            [
+                {'is_saturated': True, 'bw': 10, 'local': 'gye'},
+                {'is_saturated': True, 'bw': 9, 'local': 'uio'},
+                {'is_saturated': False, 'bw': 2, 'local': 'gye'},
+                {'is_saturated': False, 'bw': 2, 'local': 'uio'}
+            ])
         self.congestedLinks = 2  # state
         return self.congestedLinks
 
     def render(self):
         print('--------------------------')
         for idx, link in enumerate(self.links):
-            print(f"{idx + 1} -> BW:{link['bw']} (Saturated:{link['is_saturated']})")
+            print(f"{idx + 1} -> BW:{link['bw']} (Saturated:{link['is_saturated']}) - Region: {link['local']}")
         print('--------------------------')
 
     def actionSpaceSample(self):
@@ -103,7 +137,7 @@ if __name__ == '__main__':
         for action in env.possibleActions:
             Q[state, action] = 0  # Setting the initial return to 0 encourages the model to try new options since any first move will return -1 reward
 
-    numGames = 10
+    numGames = 30
     totalRewards = np.zeros(numGames)
     env.render()
 
@@ -139,10 +173,12 @@ if __name__ == '__main__':
             logger.info("Final network state")
             env.render()
 
-        # Setting epsilon to pure greedy
+        # Setting epsilon to pure greedy -> 1 -> 0.8 -> 0.6 -> 0.4 -> 0.2 -> 0
         if epsilon - 2 / numGames > 0:
+            logger.info(f"Epsilone reduced to greedy: {epsilon}")
             epsilon -= 2 / numGames
         else:
+            logger.info(f"Epsilone = {epsilon}")
             epsilon = 0
 
         totalRewards[i] = epRewards
