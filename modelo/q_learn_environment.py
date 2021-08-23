@@ -84,7 +84,7 @@ class QNEnv(object):
         chosen_link = links[chosen_action]
 
         # === Valor de tráfico de referencia que se va a mover
-        reference_bw = get_reference_bw(chosen_link['capacidad'])
+        reference_bw = get_reference_bw(congested_link['capacidad'])
 
         congested_link['bw'] -= reference_bw
         congested_link['congestionado'] = is_congested(congested_link)
