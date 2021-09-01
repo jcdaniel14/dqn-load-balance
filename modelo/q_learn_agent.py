@@ -1,4 +1,4 @@
-from utils import plot_learning
+from plotter import plot_mavg_sr
 
 import pickle
 import numpy as np
@@ -7,6 +7,7 @@ import os
 
 logger = logging.getLogger('q-learn')
 path = os.path.dirname(os.path.abspath(__file__))
+WINDOW = 50
 
 
 class QNAgent(object):
@@ -29,35 +30,46 @@ class QNAgent(object):
 
     def q_table(self):
         Q = {}
-        for state in self.env.state_space_plus:
+        for state in self.env.state_space:
             for action in self.env.possible_actions:
                 Q[state, action] = 0  # Initial value of 0 encourages the model to try new options since any first move will return -1, -2 or -10 reward
         return Q
 
-    def choose_action(self, state, epsilon=0):
+    def choose_action(self, state, epsilon=0, log=False):
         """
         - En base a la funcion Q, estima usando los valores de recompensa obtenidos anteriormente una decision que maximice la recompensa
         """
-        if np.random.random() < (1 - epsilon):
+        idx = self.env.get_congested_link_idx()
+        if np.random.random() > epsilon:
             values = np.array([self.Q[state, a] for a in self.env.possible_actions])
             action = np.argmax(values)
-            print(f"Se ha seleccionado el enlace {self.env.possible_actions[action] + 1}")
+            if log:
+                print(f"Enlace {idx + 1} saturado, se ha seleccionado el enlace {self.env.possible_actions[action] + 1}")
             return self.env.possible_actions[action]
         else:
-            return np.random.choice(self.env.possible_actions)
+            rand = np.random.choice(self.env.possible_actions)
+            if log:
+                print(f"Enlace {idx + 1} saturado, se ha seleccionado el enlace aleatorio {rand + 1}")
+            return rand
 
-    def decrement_epsilon(self, epoch):
-        if self.epsilon - 2 / epoch > 0:
-            logger.debug(f"Epsilon reduced to value: {self.epsilon}")
-            self.epsilon -= 2 / epoch
-        else:
-            logger.debug(f"Epsilon = {self.epsilon}")
-            self.epsilon = 0
+    def decrement_epsilon(self, epoch, eps_min=0.01):
+        decrement = 1 / (epoch / 2)
+        self.epsilon = (self.epsilon - decrement) if self.epsilon > eps_min else eps_min
+
+    # def decrement_epsilon(self, epoch):
+    #     if self.epsilon - 2 / epoch > 0:
+    #         logger.debug(f"Epsilon reduced to value: {self.epsilon}")
+    #         self.epsilon -= 2 / epoch
+    #     else:
+    #         logger.debug(f"Epsilon = {self.epsilon}")
+    #         self.epsilon = 0
 
     def learn(self, epoch=50):
         scores, eps_history, steps = [], [], []
-        for i in range(epoch):
-            print('starting epoch ', i)
+        for i in range(1, epoch + 1):
+            log_it = i % 10 == 0
+            if log_it:
+                print('================================starting epoch ', i)
 
             # === Siempre hace un reset al inicial un epoch
             done = False
@@ -65,9 +77,10 @@ class QNAgent(object):
             observation = self.env.reset()
 
             while not done:
-                self.env.render("Start")
+                if log_it:
+                    self.env.render("Start")
                 # === Escoge una opcion en base a epsilon, aleatoria inicialmente y en base a la funcion Q a futuro
-                action = self.choose_action(observation, self.epsilon)
+                action = self.choose_action(observation, self.epsilon, log=log_it)
 
                 # === Realiza un step en el environment
                 observation_, reward, done, info = self.env.step(action)
@@ -80,12 +93,14 @@ class QNAgent(object):
 
                 # === Actualiza la funcion Q(s,a)
                 self.Q[observation, action] = self.Q[observation, action] + self.lr * (
-                            reward + self.discount * self.Q[observation_, action_] - self.Q[observation, action])
+                        reward + self.discount * self.Q[observation_, action_] - self.Q[observation, action])
                 # === Setea el nuevo estado como el estado actual de esta epoch
                 observation = observation_
-                self.env.render("End")
+                if log_it:
+                    self.env.render("End")
 
             # Guarda la recompensa de cada epoch para ser evaluada luego
+            # if i % 10 == 0:
             scores.append(score)
             steps.append(i)
             eps_history.append(self.epsilon)
@@ -94,8 +109,8 @@ class QNAgent(object):
             self.decrement_epsilon(epoch)
 
         # === Grafica el proceso de aprendizaje
-        plot_learning(steps, scores, eps_history, filename=f"{path}/files/learning_curve.png")
-
+        print(f"Final score: {scores[-1]} / Best Score: {max(scores)} / Perfect Score: -2")
+        plot_mavg_sr(scores, eps_history, steps, f'Evolucion del entrenamiento (mavg={WINDOW})', 'Scores', 'Training Steps', window=WINDOW, filename=f"{path}/files/learning_curve.png")
         # === Guarda los valores de Q en un archivo
         self.save()
 
