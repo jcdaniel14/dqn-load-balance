@@ -1,0 +1,27 @@
+{% extends 'layout.html' %} {% block content %}
+
+<div class="table-container">
+  <div class="text-right my-5"><a href="{{ url_for('newTest')}}"  class="btn btn-success">Agregar</a></div>
+  <table class="table table-bordered table-striped">
+    <thead>
+      <tr>
+        <th><abbr title="Position">ID</abbr></th>
+        <th>Nombre</th>
+        <th><abbr title="Played">Acciones</abbr></th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for row in Tests %}
+      <tr>
+        <th>{{row.id}}</th>
+        <td>{{row.name}}</td>
+        <td>
+            <a href="{{ url_for('editTest', id = row.id)}}"  class="btn btn-warning">Edit</a>
+            <a href="{{ url_for('test',id = row.id)}}"   class="btn btn-info">Test</a>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

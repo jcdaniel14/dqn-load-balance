@@ -1,0 +1,61 @@
+{% extends 'layout.html' %} {% block content %}
+
+
+  <form class="container"><h3 class=" py-3">Ingresar Caso de Congestion</h3>
+  <input type="hidden" name="test_id" id="test_id" value="{{test_id}}">
+  <table class="table table-bordered table-striped">
+    <thead>
+      <tr>
+        <td><label class="label">Name: </label></td>
+        <td colspan="4"><input type="text"  class="input is-small" name="test_name" id="test_name" value="{{test_name}}"></td>
+      </tr>
+      <tr>
+        <th>Interface Ethernet</th>
+        <th>Ancho de Banda</th>
+        <th class="text-center" >Congestion(%)</th>
+        <th class="text-center" >Congestion(Gpbs)</th>
+        <th class="text-center" >Congestionado?</th>
+      </tr>
+    </thead>
+
+    <tbody>
+    {% for row in NetworkTest %}
+      <tr>
+        <td>
+          <p>{{row.router}} - {{row.interface}}</p>
+        </td>
+        <td>
+            <input id="{{row.interface_id}}" class="slider" type="range"  min="1"   max="{{row.capacidad}}" value="{{row.bw}}" congestion_porcentaje="{{row.congestion_porcentaje}}"/>
+        </td>
+        <td>
+            <p id="{{row.interface_id}}_congestion_porcentaje" class="text-center" >{{row.busy_percentage}}/{{row.congestion_porcentaje}}</p>
+        </td>
+        <td>
+            <p id="{{row.interface_id}}_congestion_bits" class="text-center" >{{row.bw}}/{{row.capacidad}}</p>
+        </td>
+        <td>
+            <p   id="{{row.interface_id}}_si" class="congestionado text-center text-danger" {% if (row.congestionado !=1) %}style="display:none"  {% endif %}>Si</p>
+            <p   id="{{row.interface_id}}_no" class="congestionado text-center text-success" {% if (row.congestionado !=0) %}style="display:none"  {% endif %}>No</p>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+
+
+  <div class="field mt-3">
+    <div class="control">
+      <button id="savetestcase" class="btn btn-info " type="button">
+        Save
+      </button>
+      <a href="{{ url_for('getAllTests')}}" class="btn btn-secondary">Cancel</a>
+    </div>
+  </div>
+
+  <article id="ctn_result" class="message is-primary">
+    <div id="resut_msg" class="message-body"></div>
+  </article>
+</form>
+
+{% endblock %}

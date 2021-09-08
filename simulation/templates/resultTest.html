@@ -1,0 +1,52 @@
+{% extends 'layout.html' %}
+ {% block extrajs %}<script src="../static/js/visualization.js"></script> {% endblock %}
+{% block content %}
+<h5 class="py-3">Caso: {{test_name}}</h5>
+  <input type="hidden" id="results" value="{{results}}">
+<div class="container-fluid">
+    <div class="row">
+        <div class="col">
+           <table class="table table-bordered is-striped is-narrow is-hoverable table-congestion">
+             <thead>
+              <tr>
+                <th class="text-center" >Interface Ethernet</th>
+                <th class="text-center" >Congestion(%)</th>
+                <th class="text-center" >Congestionado?</th>
+              </tr>
+            </thead>
+
+            <tbody>
+            {% for row in NetworkTest %}
+              <tr>
+                <td><p>{{row.router}} - {{row.interface}}</p></td>
+                <td>
+                    <p id="{{row.interface_id}}_congestion_porcentaje" class="text-center" >{{row.busy_percentage}}/{{row.congestion_porcentaje}}</p>
+                </td>
+                <td>
+                    <p   id="{{row.interface_id}}_si" class="congestionado text-center text-danger" {% if (row.congestionado !=1) %}style="display:none"  {% endif %}>Si</p>
+                    <p   id="{{row.interface_id}}_no" class="congestionado text-center text-success" {% if (row.congestionado !=0) %}style="display:none"  {% endif %}>No</p>
+                </td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div class="col"></div>
+    </div>
+  <div class="row">
+    <div class="col  mt-6">
+        <h5 class="py-3">Pasos para descongestionar</h5>
+        <div id="step_results" class="border mt-3"></div>
+    </div>
+    <div class="col">
+       <div class="evolution  col-sm-12"  >
+        <iframe src="../static/evolution.html" frameborder="0"></iframe>
+    </div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+    </div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends 'layout.html' %} {% block content %}
+<div class="panel-block">
+  <div class="field has-addons">
+    <div class="control is-expanded">
+      <div class="select is-fullwidth">
+        <select id="cmb_tests" class="tests">
+          <option vaue="1">test case 1</option>
+          <option vaue="2">test case 2</option>
+        </select>
+      </div>
+    </div>
+    <div class="control">
+      <button id="btn_train" class="button is-info is-rounded" type="button">
+        Entrenar
+      </button>
+    </div>
+  </div>
+</div>
+<div id="steps_vis" class="panel-block"></div>
+<p>
+  <label># entrenamiento</label>
+  <input type="number" min="1" max="100" step="1" value="1" id="nTrain" />
+</p>
+{% endblock %}
