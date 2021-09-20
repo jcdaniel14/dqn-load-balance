@@ -1,12 +1,9 @@
-from plotter import plot_mavg_sr
+from .plotter import plot_mavg_sr
 
-import pickle
 import numpy as np
 import logging
-import os
 
 logger = logging.getLogger('q-learn')
-path = os.path.dirname(os.path.abspath(__file__))
 WINDOW = 50
 
 
@@ -18,13 +15,15 @@ class QNAgent(object):
     - Define el estado terminal cuando ya no existen enlaces saturados
     """
 
-    def __init__(self, env, epsilon=1.0, lr=0.1, discount=1.0, Q=None):
+    def __init__(self, env, epsilon=1.0, eps_decay=0.5, eps_min=0.01, lr=0.1, discount=1.0, Q=None):
         # === Environment
         self.env = env
         self.Q = self.q_table() if Q is None else Q
 
         # === Hyper-parametros
         self.epsilon = epsilon
+        self.eps_decay = eps_decay
+        self.eps_min = eps_min
         self.lr = lr
         self.discount = discount
 
@@ -45,29 +44,22 @@ class QNAgent(object):
             action = np.argmax(values)
             if log:
                 print(f"Enlace {idx + 1} saturado, se ha seleccionado el enlace {self.env.possible_actions[action] + 1}")
-            return self.env.possible_actions[action]
+            return self.env.possible_actions[action], idx
         else:
             rand = np.random.choice(self.env.possible_actions)
             if log:
                 print(f"Enlace {idx + 1} saturado, se ha seleccionado el enlace aleatorio {rand + 1}")
-            return rand
+            return rand, idx
 
-    def decrement_epsilon(self, epoch, eps_min=0.01):
-        decrement = 1 / (epoch / 2)
-        self.epsilon = (self.epsilon - decrement) if self.epsilon > eps_min else eps_min
+    def decrement_epsilon(self, epoch):
+        decrement = 1 / (epoch * self.eps_decay) if self.eps_decay != 0 else self.epsilon
+        self.epsilon = (self.epsilon - decrement) if self.epsilon > self.eps_min else self.eps_min
 
-    # def decrement_epsilon(self, epoch):
-    #     if self.epsilon - 2 / epoch > 0:
-    #         logger.debug(f"Epsilon reduced to value: {self.epsilon}")
-    #         self.epsilon -= 2 / epoch
-    #     else:
-    #         logger.debug(f"Epsilon = {self.epsilon}")
-    #         self.epsilon = 0
-
-    def learn(self, epoch=50):
-        scores, eps_history, steps = [], [], []
+    def learn(self, path, epoch=50):
+        scores, eps_history, steps, best_score = [], [], [], 0
         for i in range(1, epoch + 1):
-            log_it = i % 10 == 0
+            # log_it = i % 10 == 0
+            log_it = False
             if log_it:
                 print('================================starting epoch ', i)
 
@@ -75,12 +67,13 @@ class QNAgent(object):
             done = False
             score = 0
             observation = self.env.reset()
+            best_score = (observation - 1)*-1
 
             while not done:
                 if log_it:
                     self.env.render("Start")
                 # === Escoge una opcion en base a epsilon, aleatoria inicialmente y en base a la funcion Q a futuro
-                action = self.choose_action(observation, self.epsilon, log=log_it)
+                action, _ = self.choose_action(observation, self.epsilon, log=log_it)
 
                 # === Realiza un step en el environment
                 observation_, reward, done, info = self.env.step(action)
@@ -89,7 +82,7 @@ class QNAgent(object):
                 score += reward
 
                 # === Calcula la mejor accion posible en base al estado actual
-                action_ = self.choose_action(observation_, self.epsilon)
+                action_, _ = self.choose_action(observation_, self.epsilon)
 
                 # === Actualiza la funcion Q(s,a)
                 self.Q[observation, action] = self.Q[observation, action] + self.lr * (
@@ -109,11 +102,50 @@ class QNAgent(object):
             self.decrement_epsilon(epoch)
 
         # === Grafica el proceso de aprendizaje
-        print(f"Final score: {scores[-1]} / Best Score: {max(scores)} / Perfect Score: -2")
-        plot_mavg_sr(scores, eps_history, steps, f'Evolucion del entrenamiento (mavg={WINDOW})', 'Scores', 'Training Steps', window=WINDOW, filename=f"{path}/files/learning_curve.png")
-        # === Guarda los valores de Q en un archivo
-        self.save()
+        print(f"Final score: {scores[-1]} / Best Score: {max(scores)} / Perfect Score: {best_score}")
+        plot_mavg_sr(scores, eps_history, steps, f'Evolucion del entrenamiento (mavg={WINDOW})', 'Scores', 'Training Steps', window=WINDOW,
+                     filename=path)
 
-    def save(self):
-        with open(f'{path}/files/q_table.pickle', 'wb') as f:
-            pickle.dump(self.Q, f, pickle.HIGHEST_PROTOCOL)
+        # === Guarda los valores de Q en un archivo
+        # self.save()
+
+        # === Correr ultimo proceso con epsilon=0
+        self.eps_min, self.epsilon, log_it = 0, 0, True
+        acciones = self.execute_model(log_it)
+        return acciones
+
+    def execute_model(self, log_it):
+        done = False
+        score = 0
+        observation = self.env.reset()
+        acciones = []
+
+        while not done:
+            if log_it:
+                self.env.render("Start")
+            # === Escoge una opcion en base a epsilon, aleatoria inicialmente y en base a la funcion Q a futuro
+            action, saturated = self.choose_action(observation, self.epsilon, log=log_it)
+            acciones.append({'saturada': self.env.links[saturated]['id'], 'seleccionada': self.env.links[action]['id']})
+
+            # === Realiza un step en el environment
+            observation_, reward, done, info = self.env.step(action)
+
+            # === Actualiza el acumulado de recompensas hasta llegar al estado terminal
+            score += reward
+
+            # === Calcula la mejor accion posible en base al estado actual
+            action_, _ = self.choose_action(observation_, self.epsilon)
+
+            # === Actualiza la funcion Q(s,a)
+            self.Q[observation, action] = self.Q[observation, action] + self.lr * (
+                    reward + self.discount * self.Q[observation_, action_] - self.Q[observation, action])
+            # === Setea el nuevo estado como el estado actual de esta epoch
+            observation = observation_
+            if log_it:
+                self.env.render("End")
+
+        return acciones
+
+    # def save(self):
+    #     with open(f'{path}/files/q_table.pickle', 'wb') as f:
+    #         pickle.dump(self.Q, f, pickle.HIGHEST_PROTOCOL)

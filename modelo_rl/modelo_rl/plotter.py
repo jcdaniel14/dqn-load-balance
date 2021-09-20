@@ -22,6 +22,7 @@ def create_layout(title, y_title, x_title, x_type=None, width=800, height=500, l
         xaxis=dict(type=x_type, title=x_title),
         width=width, height=height,
         margin=go.layout.Margin(l=60, r=30, t=60, b=60),
+        showlegend=True,
     )
     layout.update(layout_kwargs)
     return layout
@@ -72,6 +73,41 @@ def plot_mavg_sr(y, eps, x, title, y_title, x_title, window=20, filename="learni
     fig.add_trace(epsilon, secondary_y=True)
     fig.update_layout(layout)
     fig.update_yaxes(title_text="Epsilon", secondary_y=True)
+    fig.show()
+    save_image(fig, filename)
+    return
+
+
+def plot_multi(plots, title, y_title, x_title, window=20, filename="learning_rate.png"):
+    data = []
+    colors = get_palette(len(plots))
+    i = 0
+    for lr, obj in plots.items():
+        color = colors[i]
+        i += 1
+        sma, upper_band, lower_band = srs_mavg(obj['y'], window)
+        graph = go.Scatter(
+            x=obj['x'], y=sma, showlegend=True,
+            line={'color': color, 'width': 1.5},
+            fillcolor=lower_opacity(color, 0.15),
+            name=lr
+        )
+        upper = go.Scatter(
+            x=obj['x'], y=upper_band, showlegend=False,
+            line={'color': color, 'width': 0},
+            fillcolor=lower_opacity(color, 0.15),
+        )
+        lower = go.Scatter(
+            x=obj['x'], y=lower_band, showlegend=False,
+            line={'color': color, 'width': 0},
+            fill='tonexty', fillcolor=lower_opacity(color, 0.15),
+        )
+        data.append(graph)
+        # data.append(upper)
+        # data.append(lower)
+
+    layout = create_layout(title=title, y_title=y_title, x_title=x_title)
+    fig = go.Figure(data, layout)
     fig.show()
     save_image(fig, filename)
     return

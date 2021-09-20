@@ -1,4 +1,4 @@
-from utils import print_link
+from .utils import print_link
 import numpy as np
 import logging
 
@@ -12,36 +12,19 @@ def is_congested(bw, capacidad) -> bool:
         return round(bw / capacidad, 2) >= 0.9
 
 
-# === GYE saturado
-# def get_training_links():
-#     return np.array(
-#         [
-#             {'congestionado': True, 'bw': 199, 'local': 'gye', 'capacidad': 200},
-#             {'congestionado': True, 'bw': 197, 'local': 'gye', 'capacidad': 200},
-#             {'congestionado': True, 'bw': 196, 'local': 'gye', 'capacidad': 200},
-#             {'congestionado': True, 'bw': 99, 'local': 'gye', 'capacidad': 100},
-#             {'congestionado': True, 'bw': 48, 'local': 'gye', 'capacidad': 50},
-#             {'congestionado': False, 'bw': 120, 'local': 'uio', 'capacidad': 200},
-#             {'congestionado': False, 'bw': 129, 'local': 'uio', 'capacidad': 200},
-#             {'congestionado': False, 'bw': 100, 'local': 'uio', 'capacidad': 200},
-#             {'congestionado': False, 'bw': 50, 'local': 'uio', 'capacidad': 100},
-#             {'congestionado': False, 'bw': 29, 'local': 'uio', 'capacidad': 60},
-#         ])
-
-
 def get_training_links():
     return np.array(
         [
-            {'congestionado': True, 'bw': 199, 'local': 'gye', 'capacidad': 200},
-            {'congestionado': False, 'bw': 187, 'local': 'gye', 'capacidad': 200},
-            {'congestionado': False, 'bw': 156, 'local': 'gye', 'capacidad': 200},
-            {'congestionado': False, 'bw': 49, 'local': 'gye', 'capacidad': 100},
-            {'congestionado': True, 'bw': 48, 'local': 'gye', 'capacidad': 50},
-            {'congestionado': False, 'bw': 120, 'local': 'uio', 'capacidad': 200},
-            {'congestionado': True, 'bw': 199, 'local': 'uio', 'capacidad': 200},
-            {'congestionado': False, 'bw': 100, 'local': 'uio', 'capacidad': 200},
-            {'congestionado': False, 'bw': 50, 'local': 'uio', 'capacidad': 100},
-            {'congestionado': False, 'bw': 29, 'local': 'uio', 'capacidad': 60},
+            {'id': 'gye1-port1', 'congestionado': True, 'bw': 199, 'region': 'gye', 'capacidad': 200},
+            {'id': 'gye1-port2', 'congestionado': False, 'bw': 187, 'region': 'gye', 'capacidad': 200},
+            {'id': 'gye1-port3', 'congestionado': False, 'bw': 156, 'region': 'gye', 'capacidad': 200},
+            {'id': 'gye2-port1', 'congestionado': False, 'bw': 49, 'region': 'gye', 'capacidad': 100},
+            {'id': 'gye2-port2', 'congestionado': True, 'bw': 48, 'region': 'gye', 'capacidad': 50},
+            {'id': 'uio1-port1', 'congestionado': False, 'bw': 120, 'region': 'uio', 'capacidad': 200},
+            {'id': 'uio1-port2', 'congestionado': True, 'bw': 199, 'region': 'uio', 'capacidad': 200},
+            {'id': 'uio2-port1', 'congestionado': False, 'bw': 100, 'region': 'uio', 'capacidad': 200},
+            {'id': 'uio2-port2', 'congestionado': False, 'bw': 50, 'region': 'uio', 'capacidad': 100},
+            {'id': 'uio2-port3', 'congestionado': False, 'bw': 29, 'region': 'uio', 'capacidad': 60},
         ])
 
 
@@ -110,7 +93,7 @@ class QNEnv(object):
             return self.current_state, -10, False, f"Link chosen {chosen_action} will be saturated"
         # === Si el enlace seleccionado es el mismo enlace saturado
         elif self.chosen_idx == self.congested_idx:
-            return self.current_state, -15, False, f"Link chosen {chosen_action} is the same saturated link, WTF"
+            return self.current_state, -10, False, f"Link chosen {chosen_action} is the same saturated link, WTF"
         else:
             reward, is_terminal_state = self.set_state(congested_link, chosen_link)
             return self.current_state, reward, is_terminal_state, None
@@ -133,7 +116,7 @@ class QNEnv(object):
         self.current_state = self.get_current_state()
 
         # === Parametros para determinar la recompensa
-        is_local = congested_link['local'] == chosen_link['local']
+        is_local = congested_link['region'] == chosen_link['region']
         is_terminal_state = self.is_terminal_state()
         return calculate_reward(is_local, is_terminal_state), is_terminal_state
 
@@ -187,7 +170,7 @@ class QNEnv(object):
     #     state = []
     #     for link in self.links:
     #         sat = 1 if link['congestionado'] else 0
-    #         local = 1 if link['local'] == "uio" else 0
+    #         local = 1 if link['region'] == "uio" else 0
     #         state.append((sat, local))
     #     return tuple(state)
 

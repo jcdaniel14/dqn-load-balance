@@ -95,10 +95,10 @@ def print_link(link, idx, congested, chosen, title):
     idx = f"0{idx}" if idx < 10 else idx
     if title == "End":
         if congested:
-            print(f"{bcolors.SAT}Link {idx} ({link['local']}):{bcolors.ENDC} {color1}{len1}{bcolors.ENDC}{color2}{len2}{bcolors.ENDC}{len3} ({link['bw']}/{link['capacidad']})Gbps")
+            print(f"{bcolors.SAT}Link {idx} ({link['region']}):{bcolors.ENDC} {color1}{len1}{bcolors.ENDC}{color2}{len2}{bcolors.ENDC}{len3} ({link['bw']}/{link['capacidad']})Gbps")
         elif chosen:
-            print(f"{bcolors.FREE}Link {idx} ({link['local']}):{bcolors.ENDC} {color1}{len1}{bcolors.ENDC}{color2}{len2}{bcolors.ENDC}{len3} ({link['bw']}/{link['capacidad']})Gbps")
+            print(f"{bcolors.FREE}Link {idx} ({link['region']}):{bcolors.ENDC} {color1}{len1}{bcolors.ENDC}{color2}{len2}{bcolors.ENDC}{len3} ({link['bw']}/{link['capacidad']})Gbps")
         else:
-            print(f"Link {idx} ({link['local']}): {color1}{len1}{bcolors.ENDC}{color2}{len2}{bcolors.ENDC}{bcolors.BOLD}{len3}{bcolors.ENDC} ({link['bw']}/{link['capacidad']})Gbps")
+            print(f"Link {idx} ({link['region']}): {color1}{len1}{bcolors.ENDC}{color2}{len2}{bcolors.ENDC}{bcolors.BOLD}{len3}{bcolors.ENDC} ({link['bw']}/{link['capacidad']})Gbps")
     else:
-        print(f"Link {idx} ({link['local']}): {color1}{len1}{bcolors.ENDC}{color2}{len2}{bcolors.ENDC}{bcolors.BOLD}{len3}{bcolors.ENDC} ({link['bw']}/{link['capacidad']})Gbps")
+        print(f"Link {idx} ({link['region']}): {color1}{len1}{bcolors.ENDC}{color2}{len2}{bcolors.ENDC}{bcolors.BOLD}{len3}{bcolors.ENDC} ({link['bw']}/{link['capacidad']})Gbps")
