@@ -2,9 +2,16 @@ from .plotter import plot_mavg_sr
 
 import numpy as np
 import logging
+import json
 
 logger = logging.getLogger('q-learn')
 WINDOW = 50
+
+
+def get_links(path):
+    with open(f"{path}/files/model.pt") as f:
+        rs = json.loads(f.read())
+    return np.array(rs)
 
 
 class QNAgent(object):
@@ -55,7 +62,7 @@ class QNAgent(object):
         decrement = 1 / (epoch * self.eps_decay) if self.eps_decay != 0 else self.epsilon
         self.epsilon = (self.epsilon - decrement) if self.epsilon > self.eps_min else self.eps_min
 
-    def learn(self, path, epoch=50):
+    def learn(self, path, links, epoch=50):
         scores, eps_history, steps, best_score = [], [], [], 0
         for i in range(1, epoch + 1):
             # log_it = i % 10 == 0
@@ -66,8 +73,8 @@ class QNAgent(object):
             # === Siempre hace un reset al inicial un epoch
             done = False
             score = 0
-            observation = self.env.reset()
-            best_score = (observation - 1)*-1
+            observation = self.env.reset(get_links(path))
+            best_score = (observation - 1) * -1
 
             while not done:
                 if log_it:
@@ -104,20 +111,20 @@ class QNAgent(object):
         # === Grafica el proceso de aprendizaje
         print(f"Final score: {scores[-1]} / Best Score: {max(scores)} / Perfect Score: {best_score}")
         plot_mavg_sr(scores, eps_history, steps, f'Evolucion del entrenamiento (mavg={WINDOW})', 'Scores', 'Training Steps', window=WINDOW,
-                     filename=path)
+                     filename=f"{path}/learning_curve.png")
 
         # === Guarda los valores de Q en un archivo
         # self.save()
 
         # === Correr ultimo proceso con epsilon=0
         self.eps_min, self.epsilon, log_it = 0, 0, True
-        acciones = self.execute_model(log_it)
+        acciones = self.execute_model(path, log_it)
         return acciones
 
-    def execute_model(self, log_it):
+    def execute_model(self, path, log_it):
         done = False
         score = 0
-        observation = self.env.reset()
+        observation = self.env.reset(get_links(path))
         acciones = []
 
         while not done:
