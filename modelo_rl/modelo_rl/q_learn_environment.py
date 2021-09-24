@@ -47,10 +47,10 @@ def calculate_reward(is_local, is_terminal_state):
 def get_reference_bw(capacidad):
     if 0 <= capacidad <= 10:
         return 2
-    elif 10 < capacidad <= 60:
+    elif 10 < capacidad <= 50:
         return 6
-    elif 60 < capacidad:
-        return 10
+    elif 50 < capacidad:
+        return 12
 
 
 class QNEnv(object):

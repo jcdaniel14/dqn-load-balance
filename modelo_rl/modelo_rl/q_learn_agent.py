@@ -62,11 +62,10 @@ class QNAgent(object):
         decrement = 1 / (epoch * self.eps_decay) if self.eps_decay != 0 else self.epsilon
         self.epsilon = (self.epsilon - decrement) if self.epsilon > self.eps_min else self.eps_min
 
-    def learn(self, path, links, epoch=50):
+    def learn(self, path, log_it, epoch=50):
         scores, eps_history, steps, best_score = [], [], [], 0
         for i in range(1, epoch + 1):
-            # log_it = i % 10 == 0
-            log_it = False
+            log_it = i % 100 == 0
             if log_it:
                 print('================================starting epoch ', i)
 
@@ -75,7 +74,7 @@ class QNAgent(object):
             score = 0
             observation = self.env.reset(get_links(path))
             best_score = (observation - 1) * -1
-
+            taken = 0
             while not done:
                 if log_it:
                     self.env.render("Start")
@@ -99,6 +98,8 @@ class QNAgent(object):
                 if log_it:
                     self.env.render("End")
 
+                taken += 1
+
             # Guarda la recompensa de cada epoch para ser evaluada luego
             # if i % 10 == 0:
             scores.append(score)
@@ -108,8 +109,9 @@ class QNAgent(object):
             # === Ejemplo de evolucion de epsilon en base a epochs -> 1 -> 0.8 -> 0.6 -> 0.4 -> 0.2 -> 0
             self.decrement_epsilon(epoch)
 
-        # === Grafica el proceso de aprendizaje
-        print(f"Final score: {scores[-1]} / Best Score: {max(scores)} / Perfect Score: {best_score}")
+            # === Grafica el proceso de aprendizaje
+            print(f"Actions taken: {taken} / Final score: {scores[-1]} / Perfect Score: {best_score}")
+        # print(f"Actions taken: {taken} / Final score: {scores[-1]} / Best Score: {max(scores)} / Perfect Score: {best_score}")
         plot_mavg_sr(scores, eps_history, steps, f'Evolucion del entrenamiento (mavg={WINDOW})', 'Scores', 'Training Steps', window=WINDOW,
                      filename=f"{path}/learning_curve.png")
 
@@ -119,7 +121,7 @@ class QNAgent(object):
         # === Correr ultimo proceso con epsilon=0
         self.eps_min, self.epsilon, log_it = 0, 0, True
         acciones = self.execute_model(path, log_it)
-        return acciones
+        return acciones, scores, eps_history, steps
 
     def execute_model(self, path, log_it):
         done = False

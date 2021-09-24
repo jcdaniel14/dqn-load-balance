@@ -13,12 +13,12 @@ ch.setFormatter(formatter)
 logger.addHandler(ch)
 
 
-def solve_congestion(links, path, epoch=1000):
+def solve_congestion(links, path, log_it=False, epoch=1000):
     # === Discount farsighted, futuras recompensas tienen el mismo peso que las actuales, epsilon random en un inicio, greedy despues
     save_links(links, path)
     env = QNEnv(links=links)
     agent = QNAgent(env=env, epsilon=1.0, eps_min=0.001, lr=0.1, discount=1.0)
-    return agent.learn(path, links, epoch=epoch)
+    return agent.learn(path, log_it, epoch=epoch)
 
 
 def save_links(links, path):
