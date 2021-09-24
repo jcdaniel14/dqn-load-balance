@@ -62,10 +62,10 @@ class QNAgent(object):
         decrement = 1 / (epoch * self.eps_decay) if self.eps_decay != 0 else self.epsilon
         self.epsilon = (self.epsilon - decrement) if self.epsilon > self.eps_min else self.eps_min
 
-    def learn(self, path, log_it, epoch=50):
+    def learn(self, path, log_it=False, epoch=50):
         scores, eps_history, steps, best_score = [], [], [], 0
         for i in range(1, epoch + 1):
-            log_it = i % 100 == 0
+            # log_it = i % 100 == 0
             if log_it:
                 print('================================starting epoch ', i)
 
