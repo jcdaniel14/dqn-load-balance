@@ -19,5 +19,5 @@ ejemplo2 = np.array([{'id': 'uio1-port1', 'bw': 191, 'congestionado': True, 'reg
                      {'id': 'gye2-port1', 'bw': 100, 'congestionado': False, 'region': 'gye', 'capacidad': 200},
                      {'id': 'gye3-port1', 'bw': 50, 'congestionado': False, 'region': 'gye', 'capacidad': 100}
                      ])
-acciones = modelo_rl.solve_congestion(ejemplo2, path, log_it=False, epoch=5000)
+acciones, _, _, _ = modelo_rl.solve_congestion(ejemplo2, path, log_it=False, epoch=5000)
 print(acciones)
