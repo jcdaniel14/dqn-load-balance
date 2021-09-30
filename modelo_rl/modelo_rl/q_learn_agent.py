@@ -1,4 +1,5 @@
 from .plotter import plot_mavg_sr
+from .q_learn_environment import get_reference_bw
 
 import numpy as np
 import logging
@@ -134,7 +135,8 @@ class QNAgent(object):
                 self.env.render("Start")
             # === Escoge una opcion en base a epsilon, aleatoria inicialmente y en base a la funcion Q a futuro
             action, saturated = self.choose_action(observation, self.epsilon, log=log_it)
-            acciones.append({'saturada': self.env.links[saturated]['id'], 'seleccionada': self.env.links[action]['id']})
+            acciones.append({'saturada': self.env.links[saturated]['id'], 'seleccionada': self.env.links[action]['id'],
+                             'movimiento': get_reference_bw(self.env.links[saturated]['capacidad'])})
 
             # === Realiza un step en el environment
             observation_, reward, done, info = self.env.step(action)
