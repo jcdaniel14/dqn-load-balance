@@ -16,13 +16,14 @@ def get_palette(size):
 def create_layout(title, y_title, x_title, x_type=None, width=800, height=500, layout_kwargs=None):
     """simplified method to generate Layout"""
     layout = go.Layout(
-        title=title,
+        title={"text": title, "font": {"family": "Quicksand"}},
         legend=dict(x=0.0, y=-0.25, orientation='h'),
         yaxis=dict(rangemode='tozero', title=y_title),
         xaxis=dict(type=x_type, title=x_title),
         width=width, height=height,
         margin=go.layout.Margin(l=60, r=30, t=60, b=60),
         showlegend=True,
+
     )
     layout.update(layout_kwargs)
     return layout
@@ -72,6 +73,7 @@ def plot_mavg_sr(y, eps, x, title, y_title, x_title, window=20, filename="learni
     fig.add_trace(lower, secondary_y=False)
     fig.add_trace(epsilon, secondary_y=True)
     fig.update_layout(layout)
+    fig.update_layout(font_family="Quicksand")
     fig.update_yaxes(title_text="Epsilon", secondary_y=True)
     fig.show()
     save_image(fig, filename)

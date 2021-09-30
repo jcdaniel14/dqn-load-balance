@@ -153,10 +153,10 @@ class QNEnv(object):
             return None
 
     def get_state_space(self):
-        states = []
-        for i in range(len(self.links)):
-            states.append(i)
-        return states
+        # states = []
+        # for i in range(len(self.links)):
+        #     states.append(i)
+        return np.arange(1, len(self.links)+1).tolist()
 
     def get_current_state(self):
         state = 0

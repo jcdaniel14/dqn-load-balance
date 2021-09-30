@@ -13,12 +13,44 @@ ch.setFormatter(formatter)
 logger.addHandler(ch)
 
 
-def solve_congestion(links, path, log_it=False, epoch=1000):
-    # === Discount farsighted, futuras recompensas tienen el mismo peso que las actuales, epsilon random en un inicio, greedy despues
-    save_links(links, path)
-    env = QNEnv(links=links)
-    agent = QNAgent(env=env, epsilon=1.0, eps_min=0.001, lr=0.1, discount=1.0)
-    return agent.learn(path, log_it, epoch=epoch)
+def get_usable_bw(capacidad):
+    if capacidad >= 100:
+        return round(capacidad*0.95, 2)
+    else:
+        return round(capacidad*0.9, 2)
+
+
+def get_excess(links):
+    excesos, disponibles = 0, 0
+    for link in links:
+        valid_bw = get_usable_bw(link['capacidad'])
+        exceso = link['bw'] - valid_bw
+        exceso = exceso if exceso >= 0 else 0
+
+        disponible = valid_bw - link['bw']
+        disponible = disponible if disponible >= 0 else 0
+        logger.warning(f"Enlace {link['id']} - Exceso: {exceso} - Disponible: {disponible}")
+
+        excesos += exceso
+        disponibles += disponible
+
+    return excesos, disponibles
+
+
+def solve_congestion(links, path, log_it=False, epoch=1000) -> (list, list, list, list):
+    # === Validacion inicial
+    exceso, capacidad_disponible = get_excess(links)
+
+    if exceso == 0:
+        return "Ninguna interfaz está saturada", None, None, None
+    elif exceso >= capacidad_disponible:
+        return "No hay suficiente capacidad para descongestionar las salidas", None, None, None
+    else:
+        # === Discount farsighted, futuras recompensas tienen el mismo peso que las actuales, epsilon random en un inicio, greedy despues
+        save_links(links, path)
+        env = QNEnv(links=links)
+        agent = QNAgent(env=env, epsilon=1.0, eps_min=0.001, lr=0.1, discount=1.0)
+        return agent.learn(path, log_it, epoch=epoch)
 
 
 def save_links(links, path):
