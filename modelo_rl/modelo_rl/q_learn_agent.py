@@ -88,6 +88,8 @@ class QNAgent(object):
 
                 # === Realiza un step en el environment
                 observation_, reward, done, info = self.env.step(action)
+                if debug and logit and info:
+                    logger.warning(info)
 
                 # === Actualiza el acumulado de recompensas hasta llegar al estado terminal
                 score += reward

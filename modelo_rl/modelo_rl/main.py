@@ -37,7 +37,7 @@ def get_excess(links):
     return excesos, disponibles
 
 
-def solve_congestion(links, path, log_it=False, epoch=1000) -> (list, list, list, list, str):
+def solve_congestion(links, path, debug=False, segments=100, epoch=1000) -> (list, list, list, list, str):
     # === Validacion inicial
     exceso, capacidad_disponible = get_excess(links)
 
@@ -50,7 +50,7 @@ def solve_congestion(links, path, log_it=False, epoch=1000) -> (list, list, list
         save_links(links, path)
         env = QNEnv(links=links)
         agent = QNAgent(env=env, epsilon=1.0, eps_min=0.001, lr=0.1, discount=1.0)
-        return agent.learn(path, log_it, epoch=epoch)
+        return agent.learn(path, debug=debug, segments=segments, epoch=epoch)
 
 
 def save_links(links, path):

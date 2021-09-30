@@ -86,7 +86,7 @@ class QNEnv(object):
 
         # === Rueditas de seguridad por si el primer paso es un estado terminal
         if self.is_terminal_state():
-            return self.current_state, 0, True, "Environment is in terminal state already!"
+            return self.current_state, 0, True, f"Environment is in terminal state already!. {self.links}"
 
         # === Informativo
         self.chosen_idx = chosen_action
@@ -138,6 +138,7 @@ class QNEnv(object):
         """
         self.links = get_training_links() if links is None else links
         self.initial_state = self.get_current_state()
+        self.current_state = self.initial_state
         return self.initial_state
 
     def render(self, title):

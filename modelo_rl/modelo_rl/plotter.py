@@ -94,16 +94,16 @@ def plot_multi(plots, title, y_title, x_title, window=20, filename="learning_rat
             fillcolor=lower_opacity(color, 0.15),
             name=lr
         )
-        upper = go.Scatter(
-            x=obj['x'], y=upper_band, showlegend=False,
-            line={'color': color, 'width': 0},
-            fillcolor=lower_opacity(color, 0.15),
-        )
-        lower = go.Scatter(
-            x=obj['x'], y=lower_band, showlegend=False,
-            line={'color': color, 'width': 0},
-            fill='tonexty', fillcolor=lower_opacity(color, 0.15),
-        )
+        # upper = go.Scatter(
+        #     x=obj['x'], y=upper_band, showlegend=False,
+        #     line={'color': color, 'width': 0},
+        #     fillcolor=lower_opacity(color, 0.15),
+        # )
+        # lower = go.Scatter(
+        #     x=obj['x'], y=lower_band, showlegend=False,
+        #     line={'color': color, 'width': 0},
+        #     fill='tonexty', fillcolor=lower_opacity(color, 0.15),
+        # )
         data.append(graph)
         # data.append(upper)
         # data.append(lower)
