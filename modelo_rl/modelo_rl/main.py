@@ -15,9 +15,9 @@ logger.addHandler(ch)
 
 def get_usable_bw(capacidad):
     if capacidad >= 100:
-        return round(capacidad*0.95, 2)
+        return round(capacidad*0.949, 2)
     else:
-        return round(capacidad*0.9, 2)
+        return round(capacidad*0.89, 2)
 
 
 def get_excess(links):
