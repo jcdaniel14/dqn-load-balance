@@ -29,7 +29,7 @@ def get_excess(links):
 
         disponible = valid_bw - link['bw']
         disponible = disponible if disponible >= 0 else 0
-        logger.warning(f"Enlace {link['id']} - Exceso: {exceso} - Disponible: {disponible}")
+        logger.warning(f"Enlace {link['id']} - Exceso: {exceso:.2f} - Disponible: {disponible:.2f}")
 
         excesos += exceso
         disponibles += disponible
