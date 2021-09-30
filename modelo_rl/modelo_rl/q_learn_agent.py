@@ -36,10 +36,14 @@ class QNAgent(object):
         self.discount = discount
 
     def q_table(self):
+        """
+        - Inicializa los valores de la tabla Q(s,a) en 0
+        - Valor inicial de 0 motiva al modelo a intentar nuevas opciones dado que cualquier primer movimiento retornara una recompensa de -1, -2 o -10
+        """
         Q = {}
         for state in self.env.state_space:
             for action in self.env.possible_actions:
-                Q[state, action] = 0  # Initial value of 0 encourages the model to try new options since any first move will return -1, -2 or -10 reward
+                Q[state, action] = 0
         return Q
 
     def choose_action(self, state, epsilon=0, log=False):
@@ -63,24 +67,24 @@ class QNAgent(object):
         decrement = 1 / (epoch * self.eps_decay) if self.eps_decay != 0 else self.epsilon
         self.epsilon = (self.epsilon - decrement) if self.epsilon > self.eps_min else self.eps_min
 
-    def learn(self, path, log_it=False, epoch=50):
-        scores, eps_history, steps, best_score = [], [], [], 0
+    def learn(self, path, debug=False, segments=100, epoch=50):
+        scores, eps_history, steps, perfect_score = [], [], [], 0
         for i in range(1, epoch + 1):
-            # log_it = i % 100 == 0
-            if log_it:
+            logit = i % segments == 0
+            if debug and logit:
                 print('================================starting epoch ', i)
 
             # === Siempre hace un reset al inicial un epoch
             done = False
             score = 0
             observation = self.env.reset(get_links(path))
-            best_score = (observation - 1) * -1
+            perfect_score = (observation - 1) * -1
             taken = 0
             while not done:
-                if log_it:
+                if debug and logit:
                     self.env.render("Start")
                 # === Escoge una opcion en base a epsilon, aleatoria inicialmente y en base a la funcion Q a futuro
-                action, _ = self.choose_action(observation, self.epsilon, log=log_it)
+                action, _ = self.choose_action(observation, self.epsilon, log=(debug and logit))
 
                 # === Realiza un step en el environment
                 observation_, reward, done, info = self.env.step(action)
@@ -96,13 +100,12 @@ class QNAgent(object):
                         reward + self.discount * self.Q[observation_, action_] - self.Q[observation, action])
                 # === Setea el nuevo estado como el estado actual de esta epoch
                 observation = observation_
-                if log_it:
+                if debug and logit:
                     self.env.render("End")
 
                 taken += 1
 
             # Guarda la recompensa de cada epoch para ser evaluada luego
-            # if i % 10 == 0:
             scores.append(score)
             steps.append(i)
             eps_history.append(self.epsilon)
@@ -111,13 +114,13 @@ class QNAgent(object):
             self.decrement_epsilon(epoch)
 
             # === Grafica el proceso de aprendizaje
-            print(f"Actions taken: {taken} / Final score: {scores[-1]} / Perfect Score: {best_score}")
-        # print(f"Actions taken: {taken} / Final score: {scores[-1]} / Best Score: {max(scores)} / Perfect Score: {best_score}")
+            if debug and logit:
+                print(f"Actions taken: {taken} / Final score: {scores[-1]} / Perfect Score: {perfect_score}")
+        if debug:
+            print(f"Final score: {scores[-1]} / Best Score: {max(scores)} / Perfect Score: {perfect_score}")
+
         plot_mavg_sr(scores, eps_history, steps, f'Evolucion del entrenamiento (mavg={WINDOW})', 'Scores', 'Training Steps', window=WINDOW,
                      filename=f"{path}/learning_curve.png")
-
-        # === Guarda los valores de Q en un archivo
-        # self.save()
 
         # === Correr ultimo proceso con epsilon=0
         self.eps_min, self.epsilon, log_it = 0, 0, True

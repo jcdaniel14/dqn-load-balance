@@ -6,6 +6,11 @@ logger = logging.getLogger('q-learn')
 
 
 def is_congested(bw, capacidad) -> bool:
+    """
+    - Retorna si el enlace esta congestionado:
+    - Si es igual o mayor al 95% de capacidad para enlaces 100G/200G
+    - Si es igual o mayor al 90% de capacidad para enlaces 10G/20G/50G/60G
+    """
     if capacidad >= 100:
         return round(bw / capacidad, 2) >= 0.95
     else:
@@ -56,14 +61,15 @@ def get_reference_bw(capacidad):
 class QNEnv(object):
 
     def __init__(self, links=None):
-        # === Entorno y estado inicial (Observation)
+        # === Entorno
         self.links = get_training_links() if links is None else links
+        # === Estado inicial (Observation) => # de interfaces saturadas
         self.initial_state = self.get_current_state()
         self.current_state = self.initial_state
 
-        # === Espacio de estados / Todos los posibles estados excluyendo el estado terminal
+        # === Espacio de estados / Todos los posibles estados incluyendo el estado terminal
         self.state_space = self.get_state_space()
-        # === Posibles acciones
+        # === Posibles acciones => Indice de cada enlace
         self.possible_actions = np.arange(start=0, stop=len(self.links))
 
         # === Informativo
@@ -77,12 +83,18 @@ class QNEnv(object):
         - Setea el nuevo estado en base a la accion escogida
         - Retorna un estandar de pytorch (current_state, reward, is_terminal_state, debug_info)
         """
+
+        # === Rueditas de seguridad por si el primer paso es un estado terminal
+        if self.is_terminal_state():
+            return self.current_state, 0, True, "Environment is in terminal state already!"
+
         # === Informativo
         self.chosen_idx = chosen_action
         self.congested_idx = self.get_congested_link_idx()
 
+        # === Siempre habra minimo un enlace saturado o el proceso habria entrado en estado terminal
         chosen_link = self.links[self.chosen_idx]
-        congested_link = self.links[self.congested_idx]  # Siempre habra minimo un enlace saturado o el proceso habria entrado en estado terminal
+        congested_link = self.links[self.congested_idx]
         reference_bw = get_reference_bw(congested_link['capacidad'])
 
         # === Si el enlace seleccionado está congestionado
@@ -153,32 +165,17 @@ class QNEnv(object):
             return None
 
     def get_state_space(self):
-        # states = []
-        # for i in range(len(self.links)):
-        #     states.append(i)
+        """
+        - Retorna los posibles estados de saturacion desde 0 hasta n enlaces saturados
+        """
         return np.arange(0, len(self.links)+1).tolist()
 
     def get_current_state(self):
+        """
+        - Retorna la cantidad de enlaces saturados
+        """
         state = 0
         for link in self.links:
             if link['congestionado']:
                 state += 1
         return state
-
-    # === BW Actual fuera del environment
-    # def get_current_state(self):
-    #     state = []
-    #     for link in self.links:
-    #         sat = 1 if link['congestionado'] else 0
-    #         local = 1 if link['region'] == "uio" else 0
-    #         state.append((sat, local))
-    #     return tuple(state)
-
-    # def get_state_space(self, features=2):
-    #     states = []
-    #     states_len = 2 ** (len(self.links) * features)
-    #     logger.warning(f"Longitud de state space {states_len}")
-    #     for i in range(states_len):
-    #         states.append(to_tuple(decimal_to_bin(i, len(self.links) * features), features))
-    #     logger.info("State space completado")
-    #     return states
