@@ -121,7 +121,7 @@ class QNAgent(object):
         # === Correr ultimo proceso con epsilon=0
         self.eps_min, self.epsilon, log_it = 0, 0, True
         acciones = self.execute_model(path, log_it)
-        return acciones, scores, eps_history, steps
+        return acciones, scores, eps_history, steps, None
 
     def execute_model(self, path, log_it):
         done = False

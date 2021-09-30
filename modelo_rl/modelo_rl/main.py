@@ -37,14 +37,14 @@ def get_excess(links):
     return excesos, disponibles
 
 
-def solve_congestion(links, path, log_it=False, epoch=1000) -> (list, list, list, list):
+def solve_congestion(links, path, log_it=False, epoch=1000) -> (list, list, list, list, str):
     # === Validacion inicial
     exceso, capacidad_disponible = get_excess(links)
 
     if exceso == 0:
-        return "Ninguna interfaz está saturada", None, None, None
+        return None, None, None, None, "Ninguna interfaz está saturada"
     elif exceso >= capacidad_disponible:
-        return "No hay suficiente capacidad para descongestionar las salidas", None, None, None
+        return None, None, None, None, "No hay suficiente capacidad para descongestionar las salidas"
     else:
         # === Discount farsighted, futuras recompensas tienen el mismo peso que las actuales, epsilon random en un inicio, greedy despues
         save_links(links, path)
