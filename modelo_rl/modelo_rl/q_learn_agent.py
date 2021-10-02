@@ -63,9 +63,17 @@ class QNAgent(object):
                 print(f"Enlace {idx + 1} saturado, se ha seleccionado el enlace aleatorio {rand + 1}")
             return rand, idx
 
+    # def decrement_epsilon(self, epoch):
+    #     decrement = 1 / (epoch * self.eps_decay) if self.eps_decay != 0 else self.epsilon
+    #     self.epsilon = (self.epsilon - decrement) if self.epsilon > self.eps_min else self.eps_min
     def decrement_epsilon(self, epoch):
-        decrement = 1 / (epoch * self.eps_decay) if self.eps_decay != 0 else self.epsilon
-        self.epsilon = (self.epsilon - decrement) if self.epsilon > self.eps_min else self.eps_min
+        if self.eps_decay == 0:
+            self.epsilon = 0
+        elif self.eps_decay == 1:
+            self.epsilon = 1
+        else:
+            decrement = 1 / (epoch * self.eps_decay) if self.eps_decay != 0 else self.epsilon
+            self.epsilon = (self.epsilon - decrement) if self.epsilon > self.eps_min else self.eps_min
 
     def learn(self, path, debug=False, segments=100, epoch=50):
         scores, eps_history, steps, perfect_score = [], [], [], 0
@@ -121,7 +129,7 @@ class QNAgent(object):
         if debug:
             print(f"Final score: {scores[-1]} / Best Score: {max(scores)} / Perfect Score: {perfect_score}")
 
-        plot_mavg_sr(scores, eps_history, steps, f'Evolucion del entrenamiento (mavg={WINDOW})', 'Scores', 'Training Steps', window=WINDOW,
+            plot_mavg_sr(scores, eps_history, steps, f'Evolucion del entrenamiento (mavg={WINDOW})', 'Scores', 'Training Steps', window=WINDOW,
                      filename=f"{path}/learning_curve.png")
 
         # === Correr ultimo proceso con epsilon=0

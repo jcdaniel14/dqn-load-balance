@@ -1,6 +1,7 @@
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
+import json
 
 
 class bcolors:
@@ -15,6 +16,11 @@ class bcolors:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
+
+
+def save_links(links, path):
+    with open(f"{path}/files/model.pt", 'w+') as f:
+        f.write(json.dumps(links.tolist()))
 
 
 def decimal_to_bin(n, length):
@@ -69,7 +75,7 @@ def plot_learning(x, scores, epsilons, lines=None, filename='learning_curve.png'
     plt.savefig(filename)
 
 
-def print_link(link, idx, congested, chosen, title):
+def print_link(link, congested, chosen, title):
     color1 = bcolors.OKBLUE
     color2 = bcolors.WARNING
 
@@ -91,14 +97,16 @@ def print_link(link, idx, congested, chosen, title):
     len2 = sat * fill
     len3 = (cap - bw) * fill2
 
-    idx = idx + 1
-    idx = f"0{idx}" if idx < 10 else idx
     if title == "End":
         if congested:
-            print(f"{bcolors.SAT}Link {idx} ({link['region']}):{bcolors.ENDC} {color1}{len1}{bcolors.ENDC}{color2}{len2}{bcolors.ENDC}{len3} ({link['bw']}/{link['capacidad']})Gbps")
+            print(
+                f"{bcolors.SAT}Link {link['id']}:{bcolors.ENDC} {color1}{len1}{bcolors.ENDC}{color2}{len2}{bcolors.ENDC}{len3} ({link['bw']}/{link['capacidad']})Gbps")
         elif chosen:
-            print(f"{bcolors.FREE}Link {idx} ({link['region']}):{bcolors.ENDC} {color1}{len1}{bcolors.ENDC}{color2}{len2}{bcolors.ENDC}{len3} ({link['bw']}/{link['capacidad']})Gbps")
+            print(
+                f"{bcolors.FREE}Link {link['id']}:{bcolors.ENDC} {color1}{len1}{bcolors.ENDC}{color2}{len2}{bcolors.ENDC}{len3} ({link['bw']}/{link['capacidad']})Gbps")
         else:
-            print(f"Link {idx} ({link['region']}): {color1}{len1}{bcolors.ENDC}{color2}{len2}{bcolors.ENDC}{bcolors.BOLD}{len3}{bcolors.ENDC} ({link['bw']}/{link['capacidad']})Gbps")
+            print(
+                f"Link {link['id']}: {color1}{len1}{bcolors.ENDC}{color2}{len2}{bcolors.ENDC}{bcolors.BOLD}{len3}{bcolors.ENDC} ({link['bw']}/{link['capacidad']})Gbps")
     else:
-        print(f"Link {idx} ({link['region']}): {color1}{len1}{bcolors.ENDC}{color2}{len2}{bcolors.ENDC}{bcolors.BOLD}{len3}{bcolors.ENDC} ({link['bw']}/{link['capacidad']})Gbps")
+        print(
+            f"Link {link['id']}: {color1}{len1}{bcolors.ENDC}{color2}{len2}{bcolors.ENDC}{bcolors.BOLD}{len3}{bcolors.ENDC} ({link['bw']}/{link['capacidad']})Gbps")

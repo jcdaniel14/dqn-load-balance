@@ -1,4 +1,4 @@
-from .utils import print_link
+from .utils import print_link, save_links
 import numpy as np
 import logging
 
@@ -17,8 +17,8 @@ def is_congested(bw, capacidad) -> bool:
         return round(bw / capacidad, 2) >= 0.9
 
 
-def get_training_links():
-    return np.array(
+def get_training_links(path):
+    links = np.array(
         [
             {'id': 'gye1-port1', 'congestionado': True, 'bw': 199, 'region': 'gye', 'capacidad': 200},
             {'id': 'gye1-port2', 'congestionado': False, 'bw': 187, 'region': 'gye', 'capacidad': 200},
@@ -31,21 +31,23 @@ def get_training_links():
             {'id': 'uio2-port2', 'congestionado': False, 'bw': 50, 'region': 'uio', 'capacidad': 100},
             {'id': 'uio2-port3', 'congestionado': False, 'bw': 29, 'region': 'uio', 'capacidad': 60},
         ])
+    save_links(links, path)
+    return links
 
 
 def calculate_reward(is_local, is_terminal_state):
     """
     - Define las recompensas en base al estado y la decision tomada
     -    0 Si es estado terminal y la decision fue un movimiento local
-    -   -1 Si es estado terminal y la decision no fue un movimiento local
     -   -1 Si no es estado terminal y la decision fue un movimiento local
-    -   -2 Si no es estado terminal y la decision no fue un movimiento local
+    -   -3 Si es estado terminal y la decision no fue un movimiento local
+    -   -4 Si no es estado terminal y la decision no fue un movimiento local
     """
     reward = 0
     if not is_terminal_state:
         reward -= 1
     if not is_local:
-        reward -= 1
+        reward -= 3
     return reward
 
 
@@ -60,9 +62,9 @@ def get_reference_bw(capacidad):
 
 class QNEnv(object):
 
-    def __init__(self, links=None):
+    def __init__(self, links=None, path=None):
         # === Entorno
-        self.links = get_training_links() if links is None else links
+        self.links = get_training_links(path) if links is None else links
         # === Estado inicial (Observation) => # de interfaces saturadas
         self.initial_state = self.get_current_state()
         self.current_state = self.initial_state
@@ -75,6 +77,7 @@ class QNEnv(object):
         # === Informativo
         self.congested_idx = 0
         self.chosen_idx = 0
+        self.path = path
 
     def step(self, chosen_action):
         """
@@ -136,7 +139,7 @@ class QNEnv(object):
         """
         - Al finalizar un epoch, se resetea el entorno para calcular las recompensas de un nuevo proceso de aprendizaje
         """
-        self.links = get_training_links() if links is None else links
+        self.links = get_training_links(self.path) if links is None else links
         self.initial_state = self.get_current_state()
         self.current_state = self.initial_state
         return self.initial_state
@@ -144,7 +147,7 @@ class QNEnv(object):
     def render(self, title):
         print(f'-------------{title}-------------')
         for idx, link in enumerate(self.links):
-            print_link(link, idx, idx == self.congested_idx, idx == self.chosen_idx, title)
+            print_link(link, idx == self.congested_idx, idx == self.chosen_idx, title)
         if title == "End":
             print('--------------------------')
 

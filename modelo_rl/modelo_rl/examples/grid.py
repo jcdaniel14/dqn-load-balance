@@ -4,7 +4,6 @@ import colorlover as cl
 import pandas as pd
 
 import numpy as np
-import pickle
 import logging
 import os
 
@@ -33,13 +32,12 @@ def create_layout(title, y_title, x_title, x_type=None, width=800, height=500, l
     """simplified method to generate Layout"""
     layout = go.Layout(
         title={"text": title, "font": {"family": "Quicksand"}},
-        legend=dict(x=0.0, y=-0.25, orientation='h'),
+        legend=dict(x=0.0, y=-0.15, orientation='h'),
         yaxis=dict(rangemode='tozero', title=y_title),
         xaxis=dict(type=x_type, title=x_title),
         width=width, height=height,
-        margin=go.layout.Margin(l=60, r=30, t=60, b=60),
+        margin=go.layout.Margin(l=30, r=30, t=30, b=30),
         showlegend=True,
-
     )
     layout.update(layout_kwargs)
     return layout
@@ -61,7 +59,7 @@ def lower_opacity(rgb, opacity):
 
 def plot_multi(plots, title, y_title, x_title, window=20, filename="learning_rate.png"):
     data = []
-    colors = get_palette(len(plots))
+    colors = ["#FFB55F", "#14607A", "#E76B74"]
     i = 0
     for lr, obj in plots.items():
         color = colors[i]
@@ -102,38 +100,24 @@ def save_image(figure, filepath):
         print(e)
 
 
-def load_agent():
-    Q = load_table()
-    # for k, v in Q.items():
-    #     if v != 0:
-    #         print(k)
-    env = QNEnv(links=example_links())
-    agent = QNAgent(Q=Q, env=env)
-    initial_state = agent.env.reset(links=example_links())
-    action = agent.choose_action(initial_state, log=True)
-
-
-def load_table():
-    with open(f'{path}/files/q_table.pickle', 'rb') as f:
-        return pickle.load(f)
-
-
 def grid_search():
     # === Discount farsighted, futuras recompensas tienen el mismo peso que las actuales, epsilon random en un inicio, greedy despues
-    env = QNEnv()
-    eps = [0, 0.5, 1]
+    env = QNEnv(path=path)
+    eps = [0, 0.25, 1]
+    lrs = [0.001, 0.01, 0.1, 1]
     plots = {}
+    # for lr in lrs:
     for e in eps:
-        agent = QNAgent(env=env, epsilon=1.0, eps_decay=e, eps_min=0, lr=0.1, discount=1.0)
-        _, scores, _, steps = agent.learn(epoch=1000, path=path)
+        agent = QNAgent(env=env, epsilon=1.0, eps_decay=e, eps_min=0.001, lr=0.1, discount=1.0)
+        _, scores, _, steps, _ = agent.learn(epoch=10000, path=path)
         name = "e=1 (constante)"
-        if e == 0.5:
+        if e == 0.25:
             name = "e=1 (decreciente)"
         elif e == 0:
             name = "e=0"
         plots[name] = {'y': scores, 'x': steps}
 
-    plot_multi(plots, "Grid Search - Epsilon", "Scores", "Training Steps", window=20)
+    plot_multi(plots, "Grid Search - Epsilon", "Scores", "Training Steps", window=50)
 
 
 def example_links():

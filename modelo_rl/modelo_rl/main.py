@@ -29,7 +29,7 @@ def get_excess(links):
 
         disponible = valid_bw - link['bw']
         disponible = disponible if disponible >= 0 else 0
-        logger.warning(f"Enlace {link['id']} - Exceso: {exceso:.2f} - Disponible: {disponible:.2f}")
+        # logger.warning(f"Enlace {link['id']} - Exceso: {exceso:.2f} - Disponible: {disponible:.2f}")
 
         excesos += exceso
         disponibles += disponible
@@ -49,7 +49,7 @@ def solve_congestion(links, path, debug=False, segments=100, epoch=1000) -> (lis
         # === Discount farsighted, futuras recompensas tienen el mismo peso que las actuales, epsilon random en un inicio, greedy despues
         save_links(links, path)
         env = QNEnv(links=links)
-        agent = QNAgent(env=env, epsilon=1.0, eps_min=0.001, lr=0.1, discount=1.0)
+        agent = QNAgent(env=env, epsilon=1.0, eps_min=0.001, eps_decay=0.25, lr=0.1, discount=1.0)
         return agent.learn(path, debug=debug, segments=segments, epoch=epoch)
 
 
