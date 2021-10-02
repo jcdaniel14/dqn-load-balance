@@ -119,7 +119,6 @@ def grid_search():
         elif e == 1:
             name = "\u03B5=1 (constante)"
         plots[name] = {'y': scores, 'x': steps}
-    print(plots)
     plot_multi(plots, "Grid Search - Epsilon", "Scores", "Training Steps", window=100)
 
 
