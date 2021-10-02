@@ -18,19 +18,21 @@ def is_congested(bw, capacidad) -> bool:
 
 
 def get_training_links(path):
-    links = np.array(
-        [
-            {'id': 'gye1-port1', 'congestionado': True, 'bw': 199, 'region': 'gye', 'capacidad': 200},
-            {'id': 'gye1-port2', 'congestionado': False, 'bw': 187, 'region': 'gye', 'capacidad': 200},
-            {'id': 'gye1-port3', 'congestionado': False, 'bw': 156, 'region': 'gye', 'capacidad': 200},
-            {'id': 'gye2-port1', 'congestionado': False, 'bw': 49, 'region': 'gye', 'capacidad': 100},
-            {'id': 'gye2-port2', 'congestionado': True, 'bw': 48, 'region': 'gye', 'capacidad': 50},
-            {'id': 'uio1-port1', 'congestionado': False, 'bw': 120, 'region': 'uio', 'capacidad': 200},
-            {'id': 'uio1-port2', 'congestionado': True, 'bw': 199, 'region': 'uio', 'capacidad': 200},
-            {'id': 'uio2-port1', 'congestionado': False, 'bw': 100, 'region': 'uio', 'capacidad': 200},
-            {'id': 'uio2-port2', 'congestionado': False, 'bw': 50, 'region': 'uio', 'capacidad': 100},
-            {'id': 'uio2-port3', 'congestionado': False, 'bw': 29, 'region': 'uio', 'capacidad': 60},
-        ])
+    links = np.array([{'id': 'uio1-port1', 'bw': 126, 'congestionado': False, 'region': 'uio', 'capacidad': 200},
+                      {'id': 'uio1-port2', 'bw': 29, 'congestionado': False, 'region': 'uio', 'capacidad': 100},
+                      {'id': 'uio1-port3', 'bw': 49, 'congestionado': True, 'region': 'uio', 'capacidad': 50},
+                      {'id': 'uio1-port4', 'bw': 27, 'congestionado': False, 'region': 'uio', 'capacidad': 50},
+                      {'id': 'uio1-port5', 'bw': 49, 'congestionado': True, 'region': 'uio', 'capacidad': 50},
+                      {'id': 'uio1-port6', 'bw': 29, 'congestionado': False, 'region': 'uio', 'capacidad': 60},
+                      {'id': 'uio2-port1', 'bw': 119, 'congestionado': False, 'region': 'uio', 'capacidad': 200},
+                      {'id': 'uio2-port2', 'bw': 129, 'congestionado': False, 'region': 'uio', 'capacidad': 200},
+                      {'id': 'gye1-port1', 'bw': 129, 'congestionado': False, 'region': 'gye', 'capacidad': 200},
+                      {'id': 'gye1-port2', 'bw': 42, 'congestionado': False, 'region': 'gye', 'capacidad': 50},
+                      {'id': 'gye1-port3', 'bw': 29, 'congestionado': False, 'region': 'gye', 'capacidad': 100},
+                      {'id': 'gye1-port4', 'bw': 199, 'congestionado': True, 'region': 'gye', 'capacidad': 200},
+                      {'id': 'gye2-port1', 'bw': 19, 'congestionado': False, 'region': 'gye', 'capacidad': 200},
+                      {'id': 'gye3-port1', 'bw': 19, 'congestionado': False, 'region': 'gye', 'capacidad': 100}
+                      ])
     save_links(links, path)
     return links
 
@@ -172,7 +174,7 @@ class QNEnv(object):
         """
         - Retorna los posibles estados de saturacion desde 0 hasta n enlaces saturados
         """
-        return np.arange(0, len(self.links)+1).tolist()
+        return np.arange(0, len(self.links) + 1).tolist()
 
     def get_current_state(self):
         """

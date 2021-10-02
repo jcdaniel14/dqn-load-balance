@@ -130,7 +130,7 @@ class QNAgent(object):
             print(f"Final score: {scores[-1]} / Best Score: {max(scores)} / Perfect Score: {perfect_score}")
 
             plot_mavg_sr(scores, eps_history, steps, f'Evolucion del entrenamiento (mavg={WINDOW})', 'Scores', 'Training Steps', window=WINDOW,
-                     filename=f"{path}/learning_curve.png")
+                         filename=f"{path}/learning_curve.png")
 
         # === Correr ultimo proceso con epsilon=0
         self.eps_min, self.epsilon, log_it = 0, 0, True

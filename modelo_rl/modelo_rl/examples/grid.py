@@ -103,15 +103,15 @@ def save_image(figure, filepath):
 def grid_search():
     # === Discount farsighted, futuras recompensas tienen el mismo peso que las actuales, epsilon random en un inicio, greedy despues
     env = QNEnv(path=path)
-    eps = [0, 0.25, 1]
+    eps = [0, 0.5, 1]
     lrs = [0.001, 0.01, 0.1, 1]
     plots = {}
     # for lr in lrs:
     for e in eps:
         agent = QNAgent(env=env, epsilon=1.0, eps_decay=e, eps_min=0.001, lr=0.1, discount=1.0)
-        _, scores, _, steps, _ = agent.learn(epoch=10000, path=path)
+        _, scores, _, steps, _ = agent.learn(epoch=5000, path=path)
         name = "e=1 (constante)"
-        if e == 0.25:
+        if e == 0.5:
             name = "e=1 (decreciente)"
         elif e == 0:
             name = "e=0"
@@ -121,19 +121,21 @@ def grid_search():
 
 
 def example_links():
-    return np.array(
-        [
-            {'congestionado': True, 'bw': 199, 'region': 'gye', 'capacidad': 200},
-            {'congestionado': True, 'bw': 197, 'region': 'gye', 'capacidad': 200},
-            {'congestionado': True, 'bw': 196, 'region': 'gye', 'capacidad': 200},
-            {'congestionado': True, 'bw': 99, 'region': 'gye', 'capacidad': 100},
-            {'congestionado': True, 'bw': 48, 'region': 'gye', 'capacidad': 50},
-            {'congestionado': False, 'bw': 120, 'region': 'uio', 'capacidad': 200},
-            {'congestionado': False, 'bw': 129, 'region': 'uio', 'capacidad': 200},
-            {'congestionado': False, 'bw': 100, 'region': 'uio', 'capacidad': 200},
-            {'congestionado': False, 'bw': 50, 'region': 'uio', 'capacidad': 100},
-            {'congestionado': False, 'bw': 29, 'region': 'uio', 'capacidad': 60},
-        ])
+    return np.array([{'id': 'uio1-port1', 'bw': 126, 'congestionado': False, 'region': 'uio', 'capacidad': 200},
+                     {'id': 'uio1-port2', 'bw': 29, 'congestionado': False, 'region': 'uio', 'capacidad': 100},
+                     {'id': 'uio1-port3', 'bw': 49, 'congestionado': True, 'region': 'uio', 'capacidad': 50},
+                     {'id': 'uio1-port4', 'bw': 27, 'congestionado': False, 'region': 'uio', 'capacidad': 50},
+                     {'id': 'uio1-port5', 'bw': 49, 'congestionado': True, 'region': 'uio', 'capacidad': 50},
+                     {'id': 'uio1-port6', 'bw': 29, 'congestionado': False, 'region': 'uio', 'capacidad': 60},
+                     {'id': 'uio2-port1', 'bw': 119, 'congestionado': False, 'region': 'uio', 'capacidad': 200},
+                     {'id': 'uio2-port2', 'bw': 129, 'congestionado': False, 'region': 'uio', 'capacidad': 200},
+                     {'id': 'gye1-port1', 'bw': 129, 'congestionado': False, 'region': 'gye', 'capacidad': 200},
+                     {'id': 'gye1-port2', 'bw': 42, 'congestionado': False, 'region': 'gye', 'capacidad': 50},
+                     {'id': 'gye1-port3', 'bw': 29, 'congestionado': False, 'region': 'gye', 'capacidad': 100},
+                     {'id': 'gye1-port4', 'bw': 199, 'congestionado': True, 'region': 'gye', 'capacidad': 200},
+                     {'id': 'gye2-port1', 'bw': 19, 'congestionado': False, 'region': 'gye', 'capacidad': 200},
+                     {'id': 'gye3-port1', 'bw': 19, 'congestionado': False, 'region': 'gye', 'capacidad': 100}
+                     ])
 
 
 if __name__ == '__main__':
