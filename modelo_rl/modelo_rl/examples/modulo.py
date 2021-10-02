@@ -23,7 +23,7 @@ for i in range(100):
                          {'id': 'gye2-port1', 'bw': 19, 'congestionado': False, 'region': 'gye', 'capacidad': 200},
                          {'id': 'gye3-port1', 'bw': 19, 'congestionado': False, 'region': 'gye', 'capacidad': 100}
                          ])
-    acciones, scores, _, _, _ = modelo_rl.solve_congestion(ejemplo2, path, debug=False, epoch=10000)
+    acciones, scores, _, _, _ = modelo_rl.solve_congestion(ejemplo2, path, debug=False, epoch=5000)
     last_scores.append(scores[-1])
     i += 1
     logger.info(f"Round {i}")
