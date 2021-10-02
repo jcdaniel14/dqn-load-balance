@@ -60,6 +60,7 @@ def lower_opacity(rgb, opacity):
 def plot_multi(plots, title, y_title, x_title, window=20, filename="learning_rate.png"):
     data = []
     colors = ["#FFB55F", "#14607A", "#E76B74"]
+    # colors = get_palette(len(plots))
     i = 0
     for lr, obj in plots.items():
         color = colors[i]
@@ -103,21 +104,23 @@ def save_image(figure, filepath):
 def grid_search():
     # === Discount farsighted, futuras recompensas tienen el mismo peso que las actuales, epsilon random en un inicio, greedy despues
     env = QNEnv(path=path)
+    # discounts = [0, 1]
+    # lrs = [0.01, 0.1, 1]
     eps = [0, 0.5, 1]
-    lrs = [0.001, 0.01, 0.1, 1]
     plots = {}
-    # for lr in lrs:
     for e in eps:
+        # for d in discounts:
         agent = QNAgent(env=env, epsilon=1.0, eps_decay=e, eps_min=0.001, lr=0.1, discount=1.0)
-        _, scores, _, steps, _ = agent.learn(epoch=5000, path=path)
-        name = "e=1 (constante)"
+        _, scores, _, steps, _ = agent.learn(epoch=5000, debug=False, path=path)
+        # name = f"\u03B1={lr}|\u03B4={d}"
+        name = "\u03B5=0"
         if e == 0.5:
-            name = "e=1 (decreciente)"
-        elif e == 0:
-            name = "e=0"
+            name = "\u03B5=0.5 (decreciente)"
+        elif e == 1:
+            name = "\u03B5=1 (constante)"
         plots[name] = {'y': scores, 'x': steps}
-
-    plot_multi(plots, "Grid Search - Epsilon", "Scores", "Training Steps", window=50)
+    print(plots)
+    plot_multi(plots, "Grid Search - Epsilon", "Scores", "Training Steps", window=100)
 
 
 def example_links():

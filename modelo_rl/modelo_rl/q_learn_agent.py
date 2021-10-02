@@ -23,7 +23,7 @@ class QNAgent(object):
     - Define el estado terminal cuando ya no existen enlaces saturados
     """
 
-    def __init__(self, env, epsilon=1.0, eps_decay=0.5, eps_min=0.01, lr=0.1, discount=1.0, Q=None):
+    def __init__(self, env, epsilon=1.0, eps_decay=0.5, eps_min=0.001, lr=0.1, discount=1.0, Q=None):
         # === Environment
         self.env = env
         self.Q = self.q_table() if Q is None else Q
@@ -63,17 +63,18 @@ class QNAgent(object):
                 print(f"Enlace {idx + 1} saturado, se ha seleccionado el enlace aleatorio {rand + 1}")
             return rand, idx
 
-    # def decrement_epsilon(self, epoch):
-    #     decrement = 1 / (epoch * self.eps_decay) if self.eps_decay != 0 else self.epsilon
-    #     self.epsilon = (self.epsilon - decrement) if self.epsilon > self.eps_min else self.eps_min
     def decrement_epsilon(self, epoch):
-        if self.eps_decay == 0:
-            self.epsilon = 0
-        elif self.eps_decay == 1:
-            self.epsilon = 1
-        else:
-            decrement = 1 / (epoch * self.eps_decay) if self.eps_decay != 0 else self.epsilon
-            self.epsilon = (self.epsilon - decrement) if self.epsilon > self.eps_min else self.eps_min
+        decrement = 1 / (epoch * self.eps_decay) if self.eps_decay != 0 else self.epsilon
+        self.epsilon = (self.epsilon - decrement) if self.epsilon > self.eps_min else self.eps_min
+
+    # def decrement_epsilon(self, epoch):
+    #     if self.eps_decay == 0:
+    #         self.epsilon = 0
+    #     elif self.eps_decay == 1:
+    #         self.epsilon = 1
+    #     else:
+    #         decrement = 1 / (epoch * self.eps_decay) if self.eps_decay != 0 else self.epsilon
+    #         self.epsilon = (self.epsilon - decrement) if self.epsilon > self.eps_min else self.eps_min
 
     def learn(self, path, debug=False, segments=100, epoch=50):
         scores, eps_history, steps, perfect_score = [], [], [], 0
