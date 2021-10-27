@@ -20,32 +20,50 @@ def get_usable_bw(capacidad):
         return round(capacidad * 0.899, 2)  # 0.001 de margen para evitar que identifique 190/190 como sin exceso cuando si esta saturada
 
 
-def get_excess(links):
-    excesos, disponibles = 0, 0
+def get_reference_bw(capacidad):
+    if 0 <= capacidad <= 10:
+        return 2
+    elif 10 < capacidad <= 50:
+        return 6
+    elif 50 < capacidad:
+        return 12
+
+
+def is_not_solvable(links):
+    excesos = 0
     for link in links:
         valid_bw = get_usable_bw(link['capacidad'])
         exceso = link['bw'] - valid_bw
-        exceso = exceso if exceso >= 0 else 0
-
-        disponible = valid_bw - link['bw']
-        disponible = disponible if disponible >= 0 else 0
-        # logger.warning(f"Enlace {link['id']} - Exceso: {exceso:.2f} - Disponible: {disponible:.2f}")
-
         excesos += exceso
-        disponibles += disponible
+        if exceso >= 0:
+            needed_bw = get_reference_bw(link['capacidad'])
+            logger.info(f"Exceso de {exceso}, se debe mover {needed_bw}")
+            if not has_bw_somewhere(needed_bw, links):
+                return False, True
 
-    return excesos, disponibles
+    return excesos == 0, False
+
+
+def has_bw_somewhere(needed_bw, links):
+    for link in links:
+        valid_bw = get_usable_bw(link['capacidad'])
+        available = valid_bw - link['bw']
+        if available >= needed_bw:
+            logger.info(f"Hay {available} disponibles en un enlace, suficientes para mover {needed_bw}")
+            return True
+    return False
 
 
 def solve_congestion(links, path, debug=False, segments=100, epoch=5000) -> (list, list, list, list, str):
     # === Validacion inicial
-    exceso, capacidad_disponible = get_excess(links)
+    not_saturated, not_solvable = is_not_solvable(links)
 
-    if exceso == 0:
+    if not_saturated:
         return None, None, None, None, "Ninguna interfaz está saturada"
-    elif exceso >= capacidad_disponible:
+    elif not_solvable:
         return None, None, None, None, "No hay suficiente capacidad para descongestionar las salidas"
     else:
+        logger.info("El problema es resolvible")
         # === Discount farsighted, futuras recompensas tienen el mismo peso que las actuales, epsilon random en un inicio, greedy despues
         save_links(links, path)
         env = QNEnv(links=links)
