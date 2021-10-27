@@ -67,7 +67,7 @@ def solve_congestion(links, path, debug=False, segments=100, epoch=5000) -> (lis
         # === Discount farsighted, futuras recompensas tienen el mismo peso que las actuales, epsilon random en un inicio, greedy despues
         save_links(links, path)
         env = QNEnv(links=links)
-        agent = QNAgent(env=env, epsilon=1.0, eps_min=0.001, eps_decay=0.5, lr=0.1, discount=1.0)
+        agent = QNAgent(env=env, epsilon=1.0, eps_min=0.001, eps_decay=0.5, lr=0.03, discount=1.0)
         return agent.learn(path, debug=debug, segments=segments, epoch=epoch)
 
 

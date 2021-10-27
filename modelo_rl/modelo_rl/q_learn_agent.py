@@ -77,23 +77,24 @@ class QNAgent(object):
     #         self.epsilon = (self.epsilon - decrement) if self.epsilon > self.eps_min else self.eps_min
 
     def learn(self, path, debug=False, segments=100, epoch=50):
-        scores, eps_history, steps, perfect_score = [], [], [], 0
+        best_actions, scores, eps_history, steps, perfect_score = [], [], [], [], 0
         for i in range(1, epoch + 1):
             logit = i % segments == 0
             if debug and logit:
                 print('================================starting epoch ', i)
 
             # === Siempre hace un reset al inicial un epoch
-            done = False
-            score = 0
+            acciones, score, taken, done = [], 0, 0, False
             observation = self.env.reset(get_links(path))
             perfect_score = (observation - 1) * -1
-            taken = 0
             while not done:
                 if debug and logit:
                     self.env.render("Start")
                 # === Escoge una opcion en base a epsilon, aleatoria inicialmente y en base a la funcion Q a futuro
-                action, _ = self.choose_action(observation, self.epsilon, log=(debug and logit))
+                action, saturated = self.choose_action(observation, self.epsilon, log=(debug and logit))
+                # === Set de decisiones
+                acciones.append({'saturada': self.env.links[saturated]['id'], 'seleccionada': self.env.links[action]['id'],
+                                 'movimiento': get_reference_bw(self.env.links[saturated]['capacidad'])})
 
                 # === Realiza un step en el environment
                 observation_, reward, done, info = self.env.step(action)
@@ -116,6 +117,11 @@ class QNAgent(object):
 
                 taken += 1
 
+
+
+            if len(scores) > 0 and score > max(scores):
+                best_actions = {"total_score": score, "acciones": acciones}
+
             # Guarda la recompensa de cada epoch para ser evaluada luego
             scores.append(score)
             steps.append(i)
@@ -135,8 +141,8 @@ class QNAgent(object):
 
         # === Correr ultimo proceso con epsilon=0
         self.eps_min, self.epsilon, log_it = 0, 0, True
-        acciones = self.execute_model(path, log_it)
-        return acciones, scores, eps_history, steps, None
+        # acciones = self.execute_model(path, log_it)
+        return best_actions, scores, eps_history, steps, None
 
     def execute_model(self, path, log_it):
         done = False
