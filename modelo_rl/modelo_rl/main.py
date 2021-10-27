@@ -34,8 +34,8 @@ def is_not_solvable(links):
     for link in links:
         valid_bw = get_usable_bw(link['capacidad'])
         exceso = link['bw'] - valid_bw
-        excesos += exceso
         if exceso >= 0:
+            excesos += exceso
             needed_bw = get_reference_bw(link['capacidad'])
             logger.info(f"Exceso de {exceso}, se debe mover {needed_bw}")
             if not has_bw_somewhere(needed_bw, links):
