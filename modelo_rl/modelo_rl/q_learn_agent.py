@@ -117,10 +117,8 @@ class QNAgent(object):
 
                 taken += 1
 
-
-
             if len(scores) > 0 and score > max(scores):
-                best_actions = {"total_score": score, "acciones": acciones}
+                best_actions = acciones
 
             # Guarda la recompensa de cada epoch para ser evaluada luego
             scores.append(score)
