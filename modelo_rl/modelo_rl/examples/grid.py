@@ -2,7 +2,7 @@ from modelo_rl import QNAgent, QNEnv
 from plotly import graph_objs as go, io as pio
 import colorlover as cl
 import pandas as pd
-
+import json
 import numpy as np
 import logging
 import os
@@ -19,6 +19,48 @@ LEARN = True
 path = os.path.dirname(os.path.abspath(__file__))
 
 
+def get_usable_bw(capacidad):
+    if capacidad >= 100:
+        return round(capacidad * 0.949, 2)  # 0.001 de margen para evitar que identifique 190/190 como sin exceso cuando si esta saturada
+    else:
+        return round(capacidad * 0.899, 2)  # 0.001 de margen para evitar que identifique 190/190 como sin exceso cuando si esta saturada
+
+
+def get_reference_bw(capacidad):
+    if 0 <= capacidad <= 10:
+        return 2
+    elif 10 < capacidad <= 50:
+        return 6
+    elif 50 < capacidad:
+        return 12
+
+
+def is_not_solvable(links):
+    excesos = 0
+    for link in links:
+        valid_bw = get_usable_bw(link['capacidad'])
+        exceso = link['bw'] - valid_bw
+        if exceso >= 0:
+            excesos += exceso
+            needed_bw = get_reference_bw(link['capacidad'])
+            logger.info(f"Exceso de {exceso}, se debe mover {needed_bw}")
+            if not has_bw_somewhere(needed_bw, links):
+                return False, True
+
+    return excesos == 0, False
+
+
+def has_bw_somewhere(needed_bw, links):
+    for link in links:
+        valid_bw = get_usable_bw(link['capacidad'])
+        available = valid_bw - link['bw']
+        if available >= needed_bw:
+            logger.info(f"Hay {available} disponibles en un enlace, suficientes para mover {needed_bw}")
+            link["bw"] += needed_bw
+            return True
+    return False
+
+
 def get_palette(size):
     """Get the suitable palette of a certain size"""
     if size <= 8:
@@ -28,7 +70,7 @@ def get_palette(size):
     return palette
 
 
-def create_layout(title, y_title, x_title, x_type=None, width=800, height=500, layout_kwargs=None):
+def create_layout(title, y_title, x_title, x_type=None, width=800, height=600, layout_kwargs=None):
     """simplified method to generate Layout"""
     layout = go.Layout(
         title={"text": title, "font": {"family": "Quicksand"}},
@@ -57,7 +99,7 @@ def lower_opacity(rgb, opacity):
     return rgb.replace('rgb(', 'rgba(').replace('hsl(', 'hsla(').replace(')', f', {opacity})')
 
 
-def plot_multi(plots, title, y_title, x_title, window=20, filename="learning_rate.png"):
+def plot_multi(plots, title, y_title, x_title, window=20, filename="eps_greedy.png"):
     data = []
     colors = ["#FFB55F", "#14607A", "#E76B74"]
     # colors = get_palette(len(plots))
@@ -103,41 +145,66 @@ def save_image(figure, filepath):
 
 def grid_search():
     # === Discount farsighted, futuras recompensas tienen el mismo peso que las actuales, epsilon random en un inicio, greedy despues
-    env = QNEnv(path=path)
+    links = example_links()
+    save_links(links, path)
+    not_saturated, not_solvable = is_not_solvable(links)
+    if not_saturated:
+        return None, None, None, None, "Ninguna interfaz está saturada"
+    elif not_solvable:
+        logger.error("Not solvable")
+        return None, None, None, None, "No hay suficiente capacidad para descongestionar las salidas"
+    else:
+        logger.info("Its solvable")
+
+    env = QNEnv(links=example_links(), path=path)
     # discounts = [0, 1]
     # lrs = [0.01, 0.1, 1]
-    eps = [0, 0.5, 1]
+    eps = [0, 0.5]
     plots = {}
+    # escenario de epsilon greedy
     for e in eps:
         # for d in discounts:
-        agent = QNAgent(env=env, epsilon=1.0, eps_decay=e, eps_min=0.001, lr=0.1, discount=1.0)
-        _, scores, _, steps, _ = agent.learn(epoch=5000, debug=False, path=path)
+        agent = QNAgent(env=env, epsilon=1.0, eps_decay=e, eps_min=0.01, lr=0.1, discount=1.0)
+        ba, scores, _, steps, _ = agent.learn(epoch=5000, debug=True, segments=5000, path=path)
+        print(f"Best actions: {ba}")
+        print(f"Max Score: {max(scores)}")
         # name = f"\u03B1={lr}|\u03B4={d}"
         name = "\u03B5=0"
         if e == 0.5:
-            name = "\u03B5=0.5 (decreciente)"
+            name = "\u03B5=1 (decreciente)"
         elif e == 1:
             name = "\u03B5=1 (constante)"
-        plots[name] = {'y': scores, 'x': steps}
-    plot_multi(plots, "Grid Search - Epsilon", "Scores", "Training Steps", window=100)
+
+        final_score = []
+        for score in scores:
+            tmp = score if score >= -800 else -800
+            final_score.append(tmp)
+        plots[name] = {'y': final_score, 'x': steps}
+
+    plot_multi(plots, "Grid Search - Epsilon", "Scores", "Training Steps", window=20)
 
 
 def example_links():
-    return np.array([{'id': 'uio1-port1', 'bw': 126, 'congestionado': False, 'region': 'uio', 'capacidad': 200},
-                     {'id': 'uio1-port2', 'bw': 29, 'congestionado': False, 'region': 'uio', 'capacidad': 100},
+    return np.array([{'id': 'uio1-port1', 'bw': 196, 'congestionado': True, 'region': 'uio', 'capacidad': 200},
+                     {'id': 'uio1-port2', 'bw': 85, 'congestionado': True, 'region': 'uio', 'capacidad': 100},
                      {'id': 'uio1-port3', 'bw': 49, 'congestionado': True, 'region': 'uio', 'capacidad': 50},
                      {'id': 'uio1-port4', 'bw': 27, 'congestionado': False, 'region': 'uio', 'capacidad': 50},
                      {'id': 'uio1-port5', 'bw': 49, 'congestionado': True, 'region': 'uio', 'capacidad': 50},
-                     {'id': 'uio1-port6', 'bw': 29, 'congestionado': False, 'region': 'uio', 'capacidad': 60},
-                     {'id': 'uio2-port1', 'bw': 119, 'congestionado': False, 'region': 'uio', 'capacidad': 200},
-                     {'id': 'uio2-port2', 'bw': 129, 'congestionado': False, 'region': 'uio', 'capacidad': 200},
+                     {'id': 'uio1-port6', 'bw': 39, 'congestionado': False, 'region': 'uio', 'capacidad': 60},
+                     {'id': 'uio2-port1', 'bw': 196, 'congestionado': True, 'region': 'uio', 'capacidad': 200},
+                     {'id': 'uio2-port2', 'bw': 196, 'congestionado': True, 'region': 'uio', 'capacidad': 200},
                      {'id': 'gye1-port1', 'bw': 129, 'congestionado': False, 'region': 'gye', 'capacidad': 200},
-                     {'id': 'gye1-port2', 'bw': 42, 'congestionado': False, 'region': 'gye', 'capacidad': 50},
-                     {'id': 'gye1-port3', 'bw': 29, 'congestionado': False, 'region': 'gye', 'capacidad': 100},
+                     {'id': 'gye1-port2', 'bw': 49, 'congestionado': True, 'region': 'gye', 'capacidad': 50},
+                     {'id': 'gye1-port3', 'bw': 89, 'congestionado': False, 'region': 'gye', 'capacidad': 100},
                      {'id': 'gye1-port4', 'bw': 199, 'congestionado': True, 'region': 'gye', 'capacidad': 200},
-                     {'id': 'gye2-port1', 'bw': 19, 'congestionado': False, 'region': 'gye', 'capacidad': 200},
-                     {'id': 'gye3-port1', 'bw': 19, 'congestionado': False, 'region': 'gye', 'capacidad': 100}
+                     {'id': 'gye2-port1', 'bw': 199, 'congestionado': True, 'region': 'gye', 'capacidad': 200},
+                     {'id': 'gye3-port1', 'bw': 88, 'congestionado': False, 'region': 'gye', 'capacidad': 100}
                      ])
+
+
+def save_links(links, path):
+    with open(f"{path}/files/model.pt", 'w+') as f:
+        f.write(json.dumps(links.tolist()))
 
 
 if __name__ == '__main__':
